@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http_client/http_client.dart';
 import 'package:http/http.dart' as http;
@@ -43,8 +45,18 @@ class _MyHomePageState extends State<MyHomePage> {
         // getName("D:/flutter projects/test folder/http_client/example/pubspec.yaml"),
         /* inner: http.Client(), packageName: "example", */ showResponse: true);
 
-    final response = await client
-        .get(Uri.parse("https://scard.share.net.sa/api/plans/get-plans"));
+    await client
+        .get(Uri.parse("https://jsonplaceholder.typicode.com/albums/1"));
+
+    await client.post(
+      Uri.parse("https://jsonplaceholder.typicode.com/albums"),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'title': "title $_counter",
+      }),
+    );
 
     setState(() {
       _counter++;
