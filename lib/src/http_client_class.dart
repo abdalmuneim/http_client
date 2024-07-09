@@ -1,17 +1,32 @@
-import 'dart:async';
-import 'dart:convert';
+import 'dart:developer';
+
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+// ignore: depend_on_referenced_packages
 import 'package:stack_trace/stack_trace.dart';
 
 class LoggingHttpClient extends http.BaseClient {
-  final http.Client _inner;
+  final http.Client inner = http.Client();
 
-  LoggingHttpClient(this._inner);
+  // ### [packageName] It is the name of the project.
+  // You can find it in the [yaml] file. In the first line, you will find the name
+  // or you can use function [getName(ymalPath)] to get name automatcly
+  final String packageName;
+
+  // ### [isShowResponse] is optional variable to show response or not
+  // Make this an false when building the [product] or don't pass it on
+  bool showResponse;
+
+  LoggingHttpClient(
+      {
+      // required this.inner,
+      required this.packageName,
+      this.showResponse = true});
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final stopwatch = Stopwatch()..start();
-    final response = await _inner.send(request);
+    final response = await inner.send(request);
 
     // Read the response stream
     final bytes = await response.stream.toBytes();
@@ -21,13 +36,17 @@ class LoggingHttpClient extends http.BaseClient {
     stopwatch.stop();
 
     // Print response details
-    print('''
+    if (showResponse) {
+      log('''
 ******** HTTP Response ********
 - Status Code: ${response.statusCode}
 - Duration: ${stopwatch.elapsedMilliseconds}ms
 - Response Body: $body
-''');
 
+******** END Response *********
+*******************************
+''');
+    }
     // Create a new response with the same body
     return http.StreamedResponse(
       http.ByteStream.fromBytes(bytes),
@@ -40,69 +59,89 @@ class LoggingHttpClient extends http.BaseClient {
       persistentConnection: response.persistentConnection,
     );
   }
-}
 
 // Global instance of the logging client
-final LoggingHttpClient _client = LoggingHttpClient(http.Client());
+  // final LoggingHttpClient globalClient = LoggingHttpClient(inner: sl());
 
-void _printRequest(String method, Uri url, String frame) {
-  List<String> frameList = frame.split(' ');
-
-  print('''
+  void _printRequest(String method, Uri url, String frame, dynamic repose) {
+    List<String> frameList = frame.split(' ');
+    if (showResponse) {
+      log("""
 ******** HTTP Request ********
 $method - $url
-- Location: $frame
+- Location: ${frame.split("package:$packageName").last}
 - File: ${frameList.first}
 - Method: ${frameList.last}
 - Line: ${frameList[1]}
-''');
-}
+- Response Body: ${repose is http.Response ? jsonDecode(repose.body) : repose};
+******** END Request ********
+*****************************
+""");
+    }
+  }
 
-@override
-Future<http.Response> get(Uri url, {Map<String, String>? headers}) async {
-  final frame = Trace.current().frames[1];
-  _printRequest('GET', url, frame.toString());
-  return _client.get(url, headers: headers);
-}
+  @override
+  Future<http.Response> get(Uri url, {Map<String, String>? headers}) async {
+    final frame = Trace.current().frames[1];
+    final response = await inner.get(url, headers: headers);
+    _printRequest('GET', url, frame.toString(), response);
+    return response;
+  }
 
-@override
-Future<http.Response> post(Uri url, {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
-  final frame = Trace.current().frames[1];
-  _printRequest('POST', url, frame.toString());
-  return _client.post(url, headers: headers, body: body, encoding: encoding);
-}
+  @override
+  Future<http.Response> post(Uri url,
+      {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
+    final frame = Trace.current().frames[1];
 
-@override
-Future<http.Response> put(Uri url, {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
-  final frame = Trace.current().frames[1];
-  _printRequest('PUT', url, frame.toString());
-  return _client.put(url, headers: headers, body: body, encoding: encoding);
-}
+    final response =
+        await inner.post(url, headers: headers, body: body, encoding: encoding);
+    _printRequest('POST', url, frame.toString(), response);
+    return response;
+  }
 
-@override
-Future<http.Response> delete(Uri url, {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
-  final frame = Trace.current().frames[1];
-  _printRequest('DELETE', url, frame.toString());
-  return _client.delete(url, headers: headers, body: body, encoding: encoding);
-}
+  @override
+  Future<http.Response> put(Uri url,
+      {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
+    final frame = Trace.current().frames[1];
+    final response =
+        await inner.put(url, headers: headers, body: body, encoding: encoding);
+    _printRequest('PUT', url, frame.toString(), response);
+    return response;
+  }
 
-@override
-Future<String> read(Uri url, {Map<String, String>? headers}) async {
-  final frame = Trace.current().frames[1];
-  _printRequest('READ', url, frame.toString());
-  return _client.read(url, headers: headers);
-}
+  @override
+  Future<http.Response> delete(Uri url,
+      {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
+    final frame = Trace.current().frames[1];
+    final response = await inner.delete(url,
+        headers: headers, body: body, encoding: encoding);
+    _printRequest('DELETE', url, frame.toString(), response);
+    return response;
+  }
 
-@override
-Future<http.Response> head(Uri url, {Map<String, String>? headers}) async {
-  final frame = Trace.current().frames[1];
-  _printRequest('HEAD', url, frame.toString());
-  return _client.head(url, headers: headers);
-}
+  @override
+  Future<String> read(Uri url, {Map<String, String>? headers}) async {
+    final frame = Trace.current().frames[1];
+    final String response = await inner.read(url, headers: headers);
+    _printRequest('READ', url, frame.toString(), response);
+    return response;
+  }
 
-@override
-Future<http.Response> patch(Uri url, {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
-  final frame = Trace.current().frames[1];
-  _printRequest('PATCH', url, frame.toString());
-  return _client.patch(url, headers: headers, body: body, encoding: encoding);
+  @override
+  Future<http.Response> head(Uri url, {Map<String, String>? headers}) async {
+    final frame = Trace.current().frames[1];
+    final response = await inner.head(url, headers: headers);
+    _printRequest('HEAD', url, frame.toString(), response);
+    return response;
+  }
+
+  @override
+  Future<http.Response> patch(Uri url,
+      {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
+    final frame = Trace.current().frames[1];
+    final response = await inner.patch(url,
+        headers: headers, body: body, encoding: encoding);
+    _printRequest('PATCH', url, frame.toString(), response);
+    return response;
+  }
 }
