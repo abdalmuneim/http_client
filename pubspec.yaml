@@ -1,10 +1,10 @@
-name: http_client
+name: http_console
 description: A starting point for Dart libraries or applications.
 version: 1.0.0
 # repository: https://github.com/my_org/my_repo
 
 environment:
-  sdk: '>=3.2.0 <=3.4.4'
+  sdk: ">=3.2.0 <=3.4.4"
 
 dependencies:
   http: ^1.1.0

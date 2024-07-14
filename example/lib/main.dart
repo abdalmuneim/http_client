@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http_client/http_client.dart';
+import 'package:http_console/http_console.dart';
 
 void main() {
   runApp(const MyApp());
