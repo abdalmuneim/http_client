@@ -72,7 +72,7 @@ class LoggingHttpClient extends http.BaseClient {
 $method - $url
 - Header: $headers
 - Body: $body
-\n
+
 - Location: ${frame.split("package:$packageName").last}
 - File: ${frameList.first}
 - Method: ${frameList.last}
