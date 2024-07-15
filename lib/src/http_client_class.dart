@@ -63,12 +63,15 @@ class LoggingHttpClient extends http.BaseClient {
 // Global instance of the logging client
   // final LoggingHttpClient globalClient = LoggingHttpClient(inner: sl());
 
-  void _printRequest(String method, Uri url, String frame, dynamic repose) {
+  void _printRequest(String method, Uri url, String frame, dynamic repose,
+      {dynamic body, dynamic headers}) {
     List<String> frameList = frame.split(' ');
     if (showResponse) {
       log("""
 ******** HTTP Request ********
 $method - $url
+- BODY: $body
+\n
 - Location: ${frame.split("package:$packageName").last}
 - File: ${frameList.first}
 - Method: ${frameList.last}
@@ -84,7 +87,13 @@ $method - $url
   Future<http.Response> get(Uri url, {Map<String, String>? headers}) async {
     final frame = Trace.current().frames[1];
     final response = await inner.get(url, headers: headers);
-    _printRequest('GET', url, frame.toString(), response);
+    _printRequest(
+      'GET',
+      url,
+      frame.toString(),
+      response,
+      headers: headers,
+    );
     return response;
   }
 
@@ -95,7 +104,14 @@ $method - $url
 
     final response =
         await inner.post(url, headers: headers, body: body, encoding: encoding);
-    _printRequest('POST', url, frame.toString(), response);
+    _printRequest(
+      'POST',
+      url,
+      frame.toString(),
+      response,
+      headers: headers,
+      body: body,
+    );
     return response;
   }
 
@@ -105,7 +121,14 @@ $method - $url
     final frame = Trace.current().frames[1];
     final response =
         await inner.put(url, headers: headers, body: body, encoding: encoding);
-    _printRequest('PUT', url, frame.toString(), response);
+    _printRequest(
+      'PUT',
+      url,
+      frame.toString(),
+      response,
+      headers: headers,
+      body: body,
+    );
     return response;
   }
 
@@ -115,7 +138,8 @@ $method - $url
     final frame = Trace.current().frames[1];
     final response = await inner.delete(url,
         headers: headers, body: body, encoding: encoding);
-    _printRequest('DELETE', url, frame.toString(), response);
+    _printRequest('DELETE', url, frame.toString(), response,
+        headers: headers, body: body);
     return response;
   }
 
@@ -123,7 +147,13 @@ $method - $url
   Future<String> read(Uri url, {Map<String, String>? headers}) async {
     final frame = Trace.current().frames[1];
     final String response = await inner.read(url, headers: headers);
-    _printRequest('READ', url, frame.toString(), response);
+    _printRequest(
+      'READ',
+      url,
+      frame.toString(),
+      response,
+      headers: headers,
+    );
     return response;
   }
 
@@ -131,7 +161,13 @@ $method - $url
   Future<http.Response> head(Uri url, {Map<String, String>? headers}) async {
     final frame = Trace.current().frames[1];
     final response = await inner.head(url, headers: headers);
-    _printRequest('HEAD', url, frame.toString(), response);
+    _printRequest(
+      'HEAD',
+      url,
+      frame.toString(),
+      response,
+      headers: headers,
+    );
     return response;
   }
 
@@ -141,7 +177,14 @@ $method - $url
     final frame = Trace.current().frames[1];
     final response = await inner.patch(url,
         headers: headers, body: body, encoding: encoding);
-    _printRequest('PATCH', url, frame.toString(), response);
+    _printRequest(
+      'PATCH',
+      url,
+      frame.toString(),
+      response,
+      headers: headers,
+      body: body,
+    );
     return response;
   }
 }
