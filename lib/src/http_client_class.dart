@@ -8,7 +8,7 @@ import 'package:stack_trace/stack_trace.dart';
 class LoggingHttpClient extends http.BaseClient {
   final http.Client inner = http.Client();
 
-  static Type get MultipartFile => http.MultipartFile;
+  static Type get multipartFile => http.MultipartFile;
 
   // ### [packageName] It is the name of the project.
   // You can find it in the [yaml] file. In the first line, you will find the name
@@ -20,14 +20,14 @@ class LoggingHttpClient extends http.BaseClient {
   bool showResponse;
 
   // Map to hold files with their names as keys
-  final Map<String, http.MultipartFile> files;
+  Map<String, http.MultipartFile>? files;
+  Map<String, String>? fields;
 
   LoggingHttpClient(
       {
       // required this.inner,
       required this.packageName,
-      this.showResponse = true})
-      : files = {};
+      this.showResponse = true});
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
@@ -196,27 +196,28 @@ $method - $url
   }
 
   Future<http.Response> multipartRequest(String methodType, Uri url,
-      Map<String, String>? fields,
       {Map<String, String>? headers}) async {
     final frame = Trace.current().frames[1];
 
     final request = http.MultipartRequest(methodType, url);
-    
+
     // Add fields to the request if provided
     if (fields != null) {
-      fields.forEach((key, value) {
+      fields?.forEach((key, value) {
         request.fields[key] = value;
       });
     }
 
     // Add files from the internal `files` map
-    for (var entry in files.entries) {
-      request.files.add(http.MultipartFile(
-        entry.key, // Use the key as the field name
-        entry.value.finalize(), // Get the stream of the file
-        entry.value.length, // Get the length of the file
-        filename: entry.key, // Use the entry key as the filename
-      ));
+    if (files != null) {
+      for (var entry in files!.entries) {
+        request.files.add(http.MultipartFile(
+          entry.key, // Use the key as the field name
+          entry.value.finalize(), // Get the stream of the file
+          entry.value.length, // Get the length of the file
+          filename: entry.key, // Use the entry key as the filename
+        ));
+      }
     }
 
     // Add headers to the request if provided
@@ -241,6 +242,5 @@ $method - $url
     // Create and return a new response
     return http.Response(response, streamedResponse.statusCode,
         headers: streamedResponse.headers);
-}
-
+  }
 }
