@@ -189,19 +189,22 @@ $method - $url
     return response;
   }
 
-  Future<http.Response> multipart(
-      Uri url, Map<String, String> fields, List<http.MultipartFile> files,
+  Future<http.Response> multipartRequest(String methodType, Uri url,
+      Map<String, String>? fields, List<http.MultipartFile>? files,
       {Map<String, String>? headers}) async {
     final frame = Trace.current().frames[1];
 
-    final request = http.MultipartRequest('POST', url);
+    final request = http.MultipartRequest(methodType, url);
+    if (fields != null) {
+      fields.forEach((key, value) {
+        request.fields[key] = value;
+      });
+    }
 
-    fields.forEach((key, value) {
-      request.fields[key] = value;
-    });
-
-    for (var file in files) {
-      request.files.add(file);
+    if (files != null) {
+      for (var file in files) {
+        request.files.add(file);
+      }
     }
 
     if (headers != null) {
@@ -214,7 +217,7 @@ $method - $url
     final response = utf8.decode(bytes);
 
     _printRequest(
-      'MULTIPART',
+      'MULTIPARTREQUEST $methodType',
       url,
       frame.toString(),
       response,
