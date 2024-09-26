@@ -188,4 +188,42 @@ $method - $url
     );
     return response;
   }
+
+  Future<http.Response> multipart(
+      Uri url, Map<String, String> fields, List<http.MultipartFile> files,
+      {Map<String, String>? headers}) async {
+    final frame = Trace.current().frames[1];
+
+    final request = http.MultipartRequest('POST', url);
+
+    fields.forEach((key, value) {
+      request.fields[key] = value;
+    });
+
+    for (var file in files) {
+      request.files.add(file);
+    }
+
+    if (headers != null) {
+      request.headers.addAll(headers);
+    }
+
+    final streamedResponse = await send(request);
+
+    final bytes = await streamedResponse.stream.toBytes();
+    final response = utf8.decode(bytes);
+
+    _printRequest(
+      'MULTIPART',
+      url,
+      frame.toString(),
+      response,
+      headers: headers,
+      body: fields.toString(),
+    );
+
+    // Create and return a new response
+    return http.Response(response, streamedResponse.statusCode,
+        headers: streamedResponse.headers);
+  }
 }
